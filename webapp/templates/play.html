@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+{% block css %}
+
+{% endblock %}
+{% block content %}
+<div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column text-center my-6">
+    <main role="main" class="inner cover my-auto">
+        <h1 class="cover-heading text-white">Searching for a match!</h1>
+        <p class="lead">Please be patient!</p>
+        <p class="lead">
+            <a id="cancel" class="btn btn-lg btn-primary">Cancel</a>
+        </p>
+    </main>
+</div>
+{% endblock %}
+{% block script %}
+<script type="text/javascript" charset="utf-8">
+    document.getElementById("cancel").addEventListener('click', cancel);
+
+    async function cancel() {
+        document.getElementById("cancel").innerHTML = 'Cancelling...';
+        socket.emit('leave', { id: socket.id })
+        socket.close();
+        await sleep(1000);
+        location.replace("/")
+    }
+</script>
+{% endblock %}

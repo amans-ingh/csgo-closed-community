@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_restful import Api
+from flask_socketio import SocketIO
 from secrets import token_hex
 import os
 
@@ -11,8 +12,11 @@ application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db = SQLAlchemy(application)
 bcrypt = Bcrypt(application)
 api = Api(application)
+sock = SocketIO(application)
+
 
 from webapp import routes
+from webapp import socket
 from webapp.myapi import MyApi
 
 api.add_resource(MyApi, '/api/<string:serverid>')

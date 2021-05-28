@@ -12,9 +12,9 @@ def page_not_found(e):
     if email:
         user = User.query.filter_by(email=email).first()
         if user:
-            return render_template('error.html', error=e, email=email, title='Page Not Found', admin=user.admin)
+            return render_template('error.html', error=e, email=email, title='Page Not Found', user=user)
         return redirect(url_for('logout', next=request.endpoint))
-    return render_template('error.html', error=e, title='Page Not found')
+    return render_template('error.html', error=e, title='Page Not found', user=False)
 
 
 @application.route('/')
@@ -23,9 +23,9 @@ def index():
     if email:
         user = User.query.filter_by(email=email).first()
         if user:
-            return render_template('index.html', email=email, index=1, admin=user.admin)
+            return render_template('index.html', email=email, index=1, user=user)
         return redirect(url_for('logout'))
-    return render_template('index.html', index=1)
+    return render_template('index.html', index=1, user=False)
 
 
 @application.route('/login', methods=['GET', 'POST'])
@@ -50,7 +50,7 @@ def login():
             return resp
         else:
             flash("Incorrect nickname or password", "danger")
-    return render_template('login.html', title='Login', form=form)
+    return render_template('login.html', title='Login', form=form, user=False)
 
 
 @application.route('/register', methods=['GET', 'POST'])
@@ -71,32 +71,39 @@ def register():
         if steamid[-1] == '/':
             steamid = steamid[0:-1]
         steamid_response = requests.get('http://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key='
-                                        '8C75B9586976DFCAF894BD72AAC00538&vanityurl=' + vanityurl)
+                                        '<key>&vanityurl=' + vanityurl)
         steamid_json = steamid_response.json()
         steam_id = 0
-        if steamid_json['response']['success'] == '1':
+        if steamid_json['response']['success'] == 1:
             steam_id = steamid_json['response']['steamid']
+            steamid_response = requests.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
+                                            '?key=<key>&steamids=' + steam_id)
+            steam_response_json = steamid_response.json()
+            profile_url = steam_response_json['response']['players'][0]['avatarfull']
         if steam_id == 0:
             steamid_response = requests.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
-                                            '?key=8C75B9586976DFCAF894BD72AAC00538&steamids=' + steamid)
+                                            '?key=<key>&steamids=' + steamid)
             steam_response_json = steamid_response.json()
             steam_id = steam_response_json['response']['players'][0]['steamid']
+            profile_url = steam_response_json['response']['players'][0]['avatarfull']
 
         if form.invite_code.data == 'admin':
             user = User(name=form.name.data, nickname=form.nickname.data,
                         email=form.email.data, password=hashed_pw, steamid=steam_id, profile_url=form.steam_url.data,
-                        admin=True, moderator=False, invite_code=token_hex(8), invited_by=99999)
+                        admin=True, moderator=False, invite_code=token_hex(8), invited_by=99999,
+                        profile_pic=profile_url)
         else:
             invited_by = User.query.filter_by(invite_code=form.invite_code.data).first()
             user = User(name=form.name.data, nickname=form.nickname.data,
                         email=form.email.data, password=hashed_pw, steamid=steam_id, profile_url=form.steam_url.data,
-                        admin=False, moderator=False, invite_code=token_hex(8), invited_by=invited_by.id)
+                        admin=False, moderator=False, invite_code=token_hex(8), invited_by=invited_by.id,
+                        profile_pic=profile_url)
             invited_by.invites_left = invited_by.invites_left - 1
         db.session.add(user)
         db.session.commit()
         flash("Account created successfully", "success")
         return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
+    return render_template('register.html', title='Register', form=form, user=False)
 
 
 @application.route('/servers', methods=['GET'])
@@ -106,7 +113,7 @@ def servers():
         user = User.query.filter_by(email=email).first()
         if user.admin:
             game_servers = Servers.query.filter_by(user_id=user.id).all()
-            return render_template('servers.html', email=email, servers=game_servers, title='Servers', admin=user.admin)
+            return render_template('servers.html', email=email, servers=game_servers, title='Servers', user=user)
         return redirect(url_for('logout'))
     return redirect(url_for('login', next=request.endpoint))
 
@@ -134,18 +141,24 @@ def account():
                 if steamid[-1] == '/':
                     steamid = steamid[0:-1]
                 steamid_response = requests.get('http://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key='
-                                                '8C75B9586976DFCAF894BD72AAC00538&vanityurl=' + vanityurl)
+                                                '<key>&vanityurl=' + vanityurl)
                 steamid_json = steamid_response.json()
                 steam_id = 0
                 if steamid_json['response']['success'] == 1:
                     steam_id = steamid_json['response']['steamid']
+                    steamid_response = requests.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
+                                                    '?key=<key>&steamids=' + steam_id)
+                    steamid_response_json = steamid_response.json()
+                    profile_url = steamid_response_json['response']['players'][0]['avatarfull']
                 if steam_id == 0:
                     steamid_response = requests.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
-                                                    '?key=8C75B9586976DFCAF894BD72AAC00538&steamids=' + steamid)
+                                                    '?key=<key>&steamids=' + steamid)
                     steam_response_json = steamid_response.json()
                     steam_id = steam_response_json['response']['players'][0]['steamid']
+                    profile_url = steam_response_json['response']['players'][0]['avatarfull']
                 user.steamid = steam_id
                 user.profile_url = form.steam_url.data
+                user.profile_pic = profile_url
                 db.session.commit()
                 flash("Account Information Updated Successfully!", "success")
                 resp = make_response(redirect('/account'))
@@ -156,7 +169,7 @@ def account():
                 form.name.data = user.name
                 form.nickname.data = user.nickname
                 form.steam_url.data = user.profile_url
-            return render_template('account.html', email=email, form=form, user=user, title='Account', admin=user.admin)
+            return render_template('account.html', email=email, form=form, user=user, title='Account')
         return redirect(url_for('logout'))
     return redirect(url_for('login', next=request.endpoint))
 
@@ -181,13 +194,25 @@ def changepassword():
             elif request.method == 'GET':
                 form.username = user.nickname
             return render_template('change_password.html',
-                                   form=form, email=email, user=user, title='Change Password', admin=user.admin)
+                                   form=form, email=email, user=user, title='Change Password')
         return redirect(url_for('logout'))
     return redirect(url_for('login', next=request.endpoint))
 
 
 @application.route('/logout')
 def logout():
+    email = request.cookies.get('email')
+    if email:
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.searching = False
+            db.session.commit()
+            resp = make_response(redirect(url_for('index')))
+            resp.delete_cookie('email')
+            return resp
+        resp = make_response(redirect(url_for('index')))
+        resp.delete_cookie('email')
+        return resp
     resp = make_response(redirect(url_for('index')))
     resp.delete_cookie('email')
     return resp
@@ -200,7 +225,7 @@ def forgot_password():
         resp = make_response(redirect('/forgot_password'))
         resp.delete_cookie('email')
         return resp
-    return render_template('forgot_password.html')
+    return render_template('forgot_password.html', user=False, title='Forgot Password')
 
 
 @application.route('/addserver', methods=['GET', 'POST'])
@@ -212,16 +237,24 @@ def add_server():
             form = AddServer()
             if form.validate_on_submit():
                 server = Servers(hostname=form.hostname.data, location=form.location.data, ip=form.ip.data,
-                                 password=form.password.data, user_id=user.id)
+                                 password=form.password.data, user_id=user.id, port=form.port.data)
                 db.session.add(server)
                 db.session.commit()
                 flash('Server added!', 'success')
                 return redirect(url_for('servers'))
-            return render_template('add_server.html', email=email, form=form, title='Add Server', admin=user.admin)
-        return render_template('unauth.html', email=email, title='Unauthorised')
+            return render_template('add_server.html', email=email, form=form, title='Add Server', user=user)
+        return render_template('unauth.html', email=email, title='Unauthorised', user=user)
     return redirect(url_for('logout'))
 
 
 @application.route('/play')
 def play():
-    return 'a'
+    email = request.cookies.get('email')
+    if email:
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.searching = True
+            db.session.commit()
+            return render_template('play.html', email=email, title='Play', user=user, matchpage=True)
+        return redirect(url_for('logout', next=request.endpoint))
+    return redirect(url_for('logout', next=request.endpoint))

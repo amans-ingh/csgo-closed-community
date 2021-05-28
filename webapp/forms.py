@@ -99,5 +99,6 @@ class AddServer(FlaskForm):
     hostname = StringField('Hostname', validators=[Length(min=2, max=20)])
     location = SelectField('Server Location', default='BOM', choices=[('BOM', 'Mumbai'), ('PUNE', 'Pune')])
     ip = StringField('IP Address', validators=[DataRequired()])
+    port = StringField('Port Number', validators=[DataRequired()])
     password = PasswordField('RCON Password', validators=[DataRequired()])
     submit = SubmitField('Add Server')

@@ -14,13 +14,17 @@ class User(db.Model):
     admin = db.Column(db.Boolean, nullable=False, default=False)
     invite_code = db.Column(db.String, nullable=False, unique=True)
     invites_left = db.Column(db.Integer, nullable=False, default=3)
+    socket = db.Column(db.String, nullable=True)
     invited_by = db.Column(db.Integer)
+    profile_pic = db.Column(db.String, nullable=False)
+    playing = db.Column(db.Boolean, nullable=False, default=False)
     matches = db.relationship('Players', backref='player', lazy=True)
     server = db.relationship('Servers', backref='owner', lazy=True)
 
 
 class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    assigned = db.Column(db.Boolean, nullable=False, default=False)
     matches = db.relationship('Players', backref='match', lazy=True)
 
 
@@ -37,6 +41,7 @@ class Servers(db.Model):
     location = db.Column(db.String, nullable=False)
     busy = db.Column(db.Boolean, nullable=False, default=False)
     password = db.Column(db.String, nullable=False)
+    port = db.Column(db.Integer, nullable=False)
     ip = db.Column(db.String, nullable=False)
     ongoing_match = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

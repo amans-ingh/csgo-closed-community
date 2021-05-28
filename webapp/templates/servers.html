@@ -3,7 +3,7 @@
 {% if servers %}
 <div role="main" class="container">
   <div class="row">
-      <div class="col-lg-8">
+    <div class="col-lg-8">
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
       {% for category, message in messages %}
@@ -13,7 +13,7 @@
       {% endfor %}
       {% endif %}
       {% endwith %}
-          
+
       {% for server in servers %}
 
       <div class="card bg-dark text-white mb-4">
@@ -53,7 +53,7 @@
       <div class="card bg-dark text-white position-fixed" style="width: 300px;">
         <div class="card-header">Contribute more?</div>
         <div class="card-body text-white">This is a closed community free matchmaking service for 128-tick server
-            experience and competitive play. Please help by volunteering, collaborating or contributing.</div>
+          experience and competitive play. Please help by volunteering, collaborating or contributing.</div>
         <a class="btn btn-primary" href="{{url_for('add_server')}}">Add Server</a>
       </div>
     </div>
