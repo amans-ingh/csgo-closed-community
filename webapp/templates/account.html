@@ -14,7 +14,7 @@
             {% endwith %}
             <div class="bg-dark text-white"
                 style="background: #ffffff; padding: 10px 20px; border: 1px solid #dddddd; border-radius: 3px; margin-bottom: 20px; position: relative;">
-                <div class="media">
+                <div class="media" style="display: flex;">
                     <img class="rounded-circle" src="{{ user.profile_pic }}"
                         style="height: 125px; width: 125px; margin-right: 20px; margin-bottom: 16px;">
                     <div class="media-body">
@@ -100,10 +100,23 @@
             <div class="card bg-dark text-white position-fixed" style="width: 300px;">
                 <div class="card-header">Invite your friends</div>
                 <div class="card-body text-white">You are allowed to invite a total of 3 friends using your invite code.
-                    You have {{user.invites_left}} invites left. Your invite code is given below.</div>
-                <a class="btn btn-primary">{{user.invite_code}}</a>
+                    You have {{user.invites_left}} invites left. Your invite code is given below. </div>
+                <div class="btn btn-primary" id="copyboi" onclick="copyfunc()">{{ user.invite_code }}</div>
             </div>
         </div>
     </div>
 </main>
+<script>
+    function copyfunc() {
+    let copyboi = document.getElementById("copyboi").innerHTML;
+    const elem = document.createElement('textarea');
+   elem.value = copyboi;
+   document.body.appendChild(elem);
+   elem.select();
+   document.execCommand('copy');
+   document.body.removeChild(elem);
+   alert("Invite Code Copied");
+    }
+</script>
+
 {% endblock %}

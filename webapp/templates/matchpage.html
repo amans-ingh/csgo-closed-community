@@ -1,0 +1,89 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-dark mb-4">
+                <div class="card-header">
+                    Team Name: team_{{ all_participants[0].nickname }}
+                </div>
+            </div>
+
+            {% for i in range(2) %}
+            {% if i%2 == 0 %}
+            <div class="card text-white bg-dark">
+                <div class="card-header">
+                    {{ all_participants[i].nickname }}
+                </div>
+                <div class="container">
+                    <a href="{{ all_participants[i].profile_url }}" target="_blank">Steam Profile</a>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-dark mb-4">
+                <div class="card-header">
+                    Team Name: team_{{ all_participants[1].nickname }}
+                </div>
+            </div>
+
+            {% for i in range(2) %}
+            {% if i%2 == 1 %}
+            <div class="card text-white bg-dark">
+                <div class="card-header">
+                    {{ all_participants[i].nickname }}
+                </div>
+                <div class="container">
+                    <a href="{{ all_participants[i].profile_url }}" target="_blank">Steam Profile</a>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+   var socketio = io();
+
+   socketio.on('connect', function () {
+      socketio.emit('clientid', { id: socketio.id, user_id: {{ user.id }}})
+    });
+
+    socketio.emit('mapveto', 'mirage')
+
+    socketio.on('mapveto', function(data) {
+        if (data['banmap'] == 'mirage') {
+            console.log('Mirage banned');
+        }
+        if (data['banmap'] == 'mirage') {
+            console.log('Inferno banned');
+        }
+        if (data['banmap'] == 'mirage') {
+            console.log('Overpass banned');
+        }
+        if (data['banmap'] == 'mirage') {
+            console.log('Nuke banned');
+        }
+        if (data['banmap'] == 'mirage') {
+            console.log('Vertigo banned');
+        }
+        if (data['banmap'] == 'mirage') {
+            console.log('Dust 2 banned');
+        }
+        if (data['banmap'] == 'mirage') {
+            console.log('Train banned');
+        }
+        console.log(data)
+    });
+</script>
+
+{% endblock %}

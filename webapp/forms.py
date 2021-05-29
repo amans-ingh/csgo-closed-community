@@ -1,8 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField, IntegerField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from webapp.models import User
-import requests
+from webapp.steamapi import SteamAPI
+from flask_login import current_user
 
 
 class RegistrationForm(FlaskForm):
@@ -21,28 +22,16 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('That email is already registered. Use Login Instead')
 
     def validate_steam_url(self, steam_url):
-        vanityurl = steam_url.data[30:]
-        if vanityurl[-1] == '/':
-            vanityurl=vanityurl[0:-1]
-        steamid = steam_url.data[36:]
-        if steamid[-1] == '/':
-            steamid = steamid[0:-1]
-        steam_response = requests.get('http://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key='
-                                      '8C75B9586976DFCAF894BD72AAC00538&vanityurl=' + vanityurl)
-        steam_response_json = steam_response.json()
-        if steam_response_json['response']['success'] != 1:
-            steam_response =requests.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
-                                          '?key=8C75B9586976DFCAF894BD72AAC00538&steamids=' + steamid)
-            steam_response_json = steam_response.json()
-            if steam_response_json['response']['players']:
-                pass
-            else:
-                raise ValidationError('Incorrect steam profile URL')
+        steam_api = SteamAPI()
+        (steam_id, profile_pic, profile_url) = steam_api.steam_id_profile(steam_url.data)
+        if steam_id:
+            pass
+        else:
+            raise ValidationError('Incorrect steam profile URL')
 
     def validate_invite_code(self, invite_code):
         if invite_code.data != 'admin':
             invited_by = User.query.filter_by(invite_code=invite_code.data).first()
-            print(invited_by.nickname)
             if invited_by:
                 if int(invited_by.invites_left) <= 0:
                     raise ValidationError('Invite code expired!')
@@ -66,25 +55,19 @@ class UpdateAccountForm(FlaskForm):
     prev_email = StringField('email_prev')
     submit = SubmitField('Update')
 
+    def validate_email(self, email):
+        other_user = User.query.filter_by(email=email.data).first()
+        if other_user:
+            if other_user.id != current_user.id:
+                raise ValidationError('Email already used! Choose another one')
+
     def validate_steam_url(self, steam_url):
-        vanityurl = steam_url.data[30:]
-        if vanityurl[-1] == '/':
-            vanityurl = vanityurl[0:-1]
-        steamid = steam_url.data[36:]
-        if steamid[-1] == '/':
-            steamid = steamid[0:-1]
-        steam_response = requests.get('http://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key='
-                                      '8C75B9586976DFCAF894BD72AAC00538&vanityurl=' + vanityurl)
-        steam_response_json = steam_response.json()
-        if steam_response_json['response']['success'] != 1:
-            steam_response = requests.get('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
-                                          '?key=8C75B9586976DFCAF894BD72AAC00538&steamids=' + steamid)
-            steam_json = steam_response.json()
-            print(steam_json)
-            if steam_json['response']['players']:
-                pass
-            else:
-                raise ValidationError('Incorrect steam profile URL')
+        steam_api = SteamAPI()
+        (steam_id, profile_pic, profile_url) = steam_api.steam_id_profile(steam_url.data)
+        if steam_id:
+            pass
+        else:
+            raise ValidationError('Incorrect steam profile URL')
 
 
 class ChangePassword(FlaskForm):
@@ -97,8 +80,12 @@ class ChangePassword(FlaskForm):
 
 class AddServer(FlaskForm):
     hostname = StringField('Hostname', validators=[Length(min=2, max=20)])
-    location = SelectField('Server Location', default='BOM', choices=[('BOM', 'Mumbai'), ('PUNE', 'Pune')])
+    location = SelectField('Server Location', default='BOM', choices=[('BOM', 'Mumbai'), ('PUNE', 'Pune'), ('MAS', 'Madras')])
     ip = StringField('IP Address', validators=[DataRequired()])
-    port = StringField('Port Number', validators=[DataRequired()])
-    password = PasswordField('RCON Password', validators=[DataRequired()])
+    port = IntegerField('Port Number', validators=[DataRequired()])
+    password = StringField('RCON Password', validators=[DataRequired()])
     submit = SubmitField('Add Server')
+
+    def validate_port(self, port):
+        if int(port.data) > 65536 or int(port.data) < 1:
+            raise ValidationError('Incorrect port number')

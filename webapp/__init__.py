@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_restful import Api
 from flask_socketio import SocketIO
+from flask_login import LoginManager
 from secrets import token_hex
 import os
 
@@ -13,6 +14,7 @@ db = SQLAlchemy(application)
 bcrypt = Bcrypt(application)
 api = Api(application)
 sock = SocketIO(application)
+login_manager = LoginManager(application)
 
 
 from webapp import routes

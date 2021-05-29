@@ -50,23 +50,35 @@
           <li class="nav-item">
             <a class="nav-link text-light nav-link-ltr" aria-current="page" href="{{url_for('servers')}}">Servers</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link text-light nav-link-ltr" aria-current="page" href="{{url_for('users')}}">Users</a>
+          </li>
           {% endif %}
-
         </ul>
-        {% if user.searching %}
-        <div style="margin: 1%" class="theme-switch-wrapper">
-          <a class="btn btn-outline-light" id='cancelbar'>Cancel Search</a>
+        {% if user.playing %}
+        <div style="margin: 1%" class="theme-switch-wrapper" id="abandondis">
+          <a class="btn btn-danger" id='abandon'>Abandon</a>
         </div>
-        {% if not matchpage %}
         <div style="margin: 1%" class="theme-switch-wrapper">
-          <a class="btn btn-outline-light" href="{{url_for('play')}}">Match Page</a>
+          <a class="btn btn-outline-light" href="{{url_for('matchpage')}}">Match Page</a>
         </div>
         {% endif %}
-        {% elif email %}
+        {% if user.searching %}
+        <div style="margin: 1%" class="theme-switch-wrapper" id="canceldis">
+          <a class="btn btn-outline-light" id='cancelbar'>Cancel Search</a>
+        </div>
+          {% if not matchpage %}
+        <div style="margin: 1%" class="theme-switch-wrapper">
+          <a class="btn btn-outline-light" href="{{url_for('matchpage')}}">Match Page</a>
+        </div>
+          {% endif %}
+        {% elif email and not user.playing %}
         <div style="margin: 1%" class="theme-switch-wrapper">
           <a class="btn btn-outline-light" href="{{url_for('play')}}">Play</a>
         </div>
         {% endif %}
+
+
 
         {% if email %}
         <div style="margin: 1%" class="theme-switch-wrapper">
@@ -102,14 +114,52 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
     integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
     crossorigin="anonymous"></script>
+  {% if user.playing %}
+  <script>
+    document.getElementById("abandon").addEventListener('click', abandon);
+    var sock =io();
+
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function abandon() {
+      document.getElementById("abandon").innerHTML = 'Match Abandoned';
+      sock.emit('abandon', { user_id: {{ user.id }} })
+      sock.close();
+      await sleep(1000);
+      location.replace("/")
+    }
+
+    sock.on('matchabandon', function(data){
+      users = data['user_id']
+      if (users.includes({{user.id}})) {
+        alert("Match Cancelled! A user abandoned the match.");
+        location.replace('/')
+      }
+    });
+
+    sock.on('connect', function () {
+      sock.emit('clientid', { id: sock.id, user_id: {{ user.id }}})
+    });
+  </script>
+  {% endif %}
+
   {% if user %}
   {% if user.searching %}
   <script>
 
     var socket = io();
 
-    socket.on("clientid", function(data) {
-      console.log(data);
+    socket.on("matchdetails", function(data) {
+      if (data == 'matchfound') {
+      socket.emit('match', { user_id: {{ user.id }} })
+      }
+      if (data == 'you') {
+      document.getElementById("canceldis").style.display = "none";
+      location.replace("/matchpage")
+      }
     });
 
 
@@ -121,7 +171,8 @@
 
     async function cancelbar() {
       document.getElementById("cancelbar").innerHTML = 'Cancelling...';
-      socket.emit('leave', { id: socket.id })
+      socket.emit('leave', { id: socket.id, user_id: {{ user.id }} })
+      console.log("Cancelled")
       socket.close();
       await sleep(1000);
       location.replace("/")
@@ -134,6 +185,7 @@
   </script>
   {% endif %}
   {% endif %}
+
 </body>
 
 </html>

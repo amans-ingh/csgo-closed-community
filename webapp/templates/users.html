@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <div class="overview text-white">
+        <h1 class="mb-4">
+            All Users
+        </h1>
+        {% for user in all_users %}
+        <div class="card bg-dark text-white mb-2" id="{{ user.id }}">
+            <div class="card-header">
+                {{ user.nickname }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -24,20 +24,24 @@
           <div class="row justify-content-center bg-transparent ">
             <div class="card-group mb-3">
               <div class="card border-success bg-transparent">
-                <div class="card-header bg-transparent text-white">Health</div>
-                <div class="card-body text-white">{{server.hostname}}</div>
-              </div>
-              <div class="card border-primary bg-transparent">
-                <div class="card-header bg-transparent text-white">Temperature</div>
+                <div class="card-header bg-transparent text-white">Location</div>
                 <div class="card-body text-white">{{server.location}}</div>
               </div>
-              <div class="card border-info bg-transparent">
-                <div class="card-header bg-transparent text-white">Voltage</div>
+              <div class="card border-primary bg-transparent">
+                <div class="card-header bg-transparent text-white">IP address</div>
                 <div class="card-body text-white">{{server.ip}}</div>
               </div>
+              <div class="card border-info bg-transparent">
+                <div class="card-header bg-transparent text-white">Port</div>
+                <div class="card-body text-white">{{ server.port }}</div>
+              </div>
               <div class="card border-warning bg-transparent">
-                <div class="card-header bg-transparent text-white">Charge</div>
-                <div class="card-body text-white">{{server.password}}</div>
+                <div class="card-header bg-transparent text-white">Status</div>
+                {% if server.busy %}
+                <div class="card-body text-white">Busy</div>
+                {% else %}
+                <div class="card-body text-white">Idle</div>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -62,7 +66,7 @@
 {% else %}
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% endwith %}
-<div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column text-center my-6">
+<div class="cover-container d-flex p-3 mx-auto flex-column text-center my-6" style="height: 88vh">
   <main role="main" class="inner cover my-auto">
     <h1 class="cover-heading text-white">Oops! Nothing Here</h1>
     <p class="lead">Add a CSGO game server</p>
