@@ -4,7 +4,8 @@ from webapp.models import User, Servers, Match, Matching
 from webapp.steamapi import SteamAPI
 from webapp.forms import RegistrationForm, LoginForm, UpdateAccountForm, ChangePassword, AddServer
 from secrets import token_hex
-from flask_login import login_user, current_user, logout_user, login_required, login_manager
+from flask_login import login_user, current_user, logout_user, login_required
+from webapp.socket import dec2bin
 
 
 @application.errorhandler(404)
@@ -183,12 +184,18 @@ def matchpage():
         return redirect(url_for('play'))
     if current_user.playing:
         all_players = Matching.query.filter_by(match_id=current_user.current_match_id).all()
+        match = Match.query.filter_by(id=current_user.current_match_id).first()
         all_participants = []
+        banned_maps = []
+        maps_available = dec2bin(match.maps, banned_maps)
         for player in all_players:
             participant = User.query.filter_by(id=player.user_id).first()
             all_participants.append(participant)
+        if current_user.id == match.team1_capt or current_user.id == match.team2_capt:
+            return render_template('matchpage.html', email=current_user.email, title='Match Room', user=current_user,
+                                   match=match, all_participants=all_participants, matchpage=True)
         return render_template('matchpage.html', email=current_user.email, title='Match Room', user=current_user,
-                               all_participants=all_participants, matchpage=True)
+                               all_participants=all_participants, matchpage=True, match=False)
     return redirect(url_for('index'))
 
 

@@ -36,10 +36,11 @@ class User(db.Model, UserMixin):
 
 class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    assigned = db.Column(db.Boolean, nullable=False, default=False)
-    pre_match = db.Column(db.Boolean, nullable=False, default=True)
-    in_match = db.Column(db.Boolean, nullable=False, default=False)
-    post_match = db.Column(db.Boolean, nullable=False, default=False)
+    status = db.Column(db.Integer, nullable=False, default=0)
+    maps = db.Column(db.Integer, nullable=False, default=127)
+    team1_capt = db.Column(db.Integer)
+    team2_capt = db.Column(db.Integer)
+    turn = db.Column(db.Boolean, default=True)
     matches = db.relationship('Matching', backref='match', lazy=True)
 
 

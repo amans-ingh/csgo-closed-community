@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-4">
-            <div class="card text-white bg-dark mb-4">
+            <div class="card text-white bg-dark mb-5">
                 <div class="card-header">
                     Team Name: team_{{ all_participants[0].nickname }}
                 </div>
@@ -15,7 +15,7 @@
                 <div class="card-header">
                     {{ all_participants[i].nickname }}
                 </div>
-                <div class="container">
+                <div class="container mb-2">
                     <a href="{{ all_participants[i].profile_url }}" target="_blank">Steam Profile</a>
                 </div>
             </div>
@@ -23,12 +23,76 @@
             {% endfor %}
         </div>
         <div class="col-md-4">
-            <div class="card">
-
+            <div class="content-section bg-dark text-white" id="mapchosen" style="display: none;">
+                <div class="overview">
+                    <h3>Map Decided</h3>
+                    <div class="card mb-4">
+                        <button class="btn btn-primary" id="decidedmap" disabled></button>
+                    </div>
+                    <div class="card mb-4">
+                        <button class="btn btn-primary" id="connect2server">Connect</button>
+                    </div>
+                </div>
             </div>
+            {% if not match %}
+            <div class="content-section bg-dark text-white" id="mapvetodiv">
+                <div class="overview-section mb-5">
+                    <h3> Map Veto </h3>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="mirage" onclick="banMap('mirage')" disabled>Ban Mirage</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="inferno" onclick="banMap('inferno')" disabled>Ban Inferno</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="overpass" onclick="banMap('overpass')" disabled>Ban Overpass</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="dust2" onclick="banMap('dust2')" disabled>Ban Dust 2</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="vertigo" onclick="banMap('vertigo')" disabled>Ban Vertigo</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="train" onclick="banMap('train')" disabled>Ban Train</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="nuke" onclick="banMap('nuke')" disabled>Ban Nuke</button>
+                </div>
+            </div>
+            {% endif %}
+            {% if match %}
+            <div class="content-section bg-dark text-white" id="mapvetodiv">
+                <div class="overview-section mb-5">
+                    <h3> Map Veto </h3>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="mirage" onclick="banMap('mirage')">Ban Mirage</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="inferno" onclick="banMap('inferno')">Ban Inferno</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="overpass" onclick="banMap('overpass')">Ban Overpass</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="dust2" onclick="banMap('dust2')">Ban Dust 2</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="vertigo" onclick="banMap('vertigo')">Ban Vertigo</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="train" onclick="banMap('train')">Ban Train</button>
+                </div>
+                <div class="card mb-4">
+                    <button class="btn btn-primary" id="nuke" onclick="banMap('nuke')">Ban Nuke</button>
+                </div>
+            </div>
+            {% endif %}
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-dark mb-4">
+            <div class="card text-white bg-dark mb-5">
                 <div class="card-header">
                     Team Name: team_{{ all_participants[1].nickname }}
                 </div>
@@ -40,7 +104,7 @@
                 <div class="card-header">
                     {{ all_participants[i].nickname }}
                 </div>
-                <div class="container">
+                <div class="container mb-2">
                     <a href="{{ all_participants[i].profile_url }}" target="_blank">Steam Profile</a>
                 </div>
             </div>
@@ -52,38 +116,103 @@
 {% endblock %}
 {% block script %}
 <script>
-   var socketio = io();
+    function removeMap(map) {
+        document.getElementById(map).disabled = 'disabled';
+        document.getElementById(map).classList.remove('btn-primary');
+        document.getElementById(map).classList.add('btn-secondary');
+    }
 
-   socketio.on('connect', function () {
-      socketio.emit('clientid', { id: socketio.id, user_id: {{ user.id }}})
+    function hidediv(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    function showdiv(id) {
+        document.getElementById(id).style.display = 'block';
+    }
+
+    var socketio = io();
+
+
+    socketio.on('connect', function (data) {
+        socketio.emit('clientid', { id: socketio.id, user_id: {{ user.id }}})
     });
 
-    socketio.emit('mapveto', 'mirage')
+    socketio.on('matchpage', function(data) {
+        if (data['mapsbanned']) {
+            var maps_banned = data['mapsbanned'];
+            len = maps_banned.length;
+            for (var i = 0; i < len; i++) {
+                var map = maps_banned[i];
+                removeMap(map);
+            }
+        }
+        if (data['finalmap']) {
+            hidediv('mapvetodiv');
+            showdiv('mapchosen');
+            document.getElementById('decidedmap').innerHTML = data['finalmap'];
+        }
+    });
 
-    socketio.on('mapveto', function(data) {
-        if (data['banmap'] == 'mirage') {
-            console.log('Mirage banned');
+    socketio.on('mapvetoclient', function(data) {
+        users = data['user_id']
+        captains = data['capt']
+        if (users.includes({{ user.id }})) {
+            if (data['map']) {
+                hidediv('mapvetodiv');
+                showdiv('mapchosen');
+                document.getElementById('decidedmap').innerHTML = data['map'];
+            }
+            else {
+                removeMap(data['banmap']);
+            }
         }
-        if (data['banmap'] == 'mirage') {
-            console.log('Inferno banned');
-        }
-        if (data['banmap'] == 'mirage') {
-            console.log('Overpass banned');
-        }
-        if (data['banmap'] == 'mirage') {
-            console.log('Nuke banned');
-        }
-        if (data['banmap'] == 'mirage') {
-            console.log('Vertigo banned');
-        }
-        if (data['banmap'] == 'mirage') {
-            console.log('Dust 2 banned');
-        }
-        if (data['banmap'] == 'mirage') {
-            console.log('Train banned');
-        }
-        console.log(data)
     });
 </script>
 
+{% if match %}
+<script>
+    function banMap(map) {
+        socketio.emit('mapveto', {userid: {{ user.id }}, banmap: map});
+        document.getElementById(map).classList.remove('btn-primary');
+        document.getElementById(map).classList.add('btn-secondary');
+    }
+
+    function disablevoting() {
+        document.getElementById('mirage').disabled = 'disabled';
+        document.getElementById('inferno').disabled = 'disabled';
+        document.getElementById('dust2').disabled = 'disabled';
+        document.getElementById('overpass').disabled = 'disabled';
+        document.getElementById('nuke').disabled = 'disabled';
+        document.getElementById('train').disabled = 'disabled';
+        document.getElementById('vertigo').disabled = 'disabled';
+    }
+
+    function enablevoting(maps) {
+        var len = maps.length;
+        for (var i=0; i<len; i++) {
+            document.getElementById(maps[i]).removeAttribute("disabled");
+        }
+    }
+
+    socketio.on('mapvetocaptain', function(data) {
+      console.log(data);
+      if (data['turn']) {
+        if (data['capt1'] == {{ user.id }}) {
+            enablevoting(data['maps_avail']);
+        }
+        else {
+            disablevoting();
+        }
+      }
+      else {
+        if (data['capt2'] == {{ user.id }}) {
+            enablevoting(data['maps_avail'])
+        }
+        else {
+            disablevoting();
+        }
+      }
+    });
+</script>
+{% endif %}
 {% endblock %}
