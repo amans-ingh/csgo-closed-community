@@ -21,7 +21,7 @@ from webapp import routes
 from webapp import socket
 from webapp.myapi import MyApi
 
-api.add_resource(MyApi, '/api/<string:serverid>')
+api.add_resource(MyApi, '/api/<string:match_id>')
 
 if os.path.exists('webapp/site.db'):
     pass

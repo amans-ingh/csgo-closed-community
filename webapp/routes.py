@@ -5,7 +5,6 @@ from webapp.steamapi import SteamAPI
 from webapp.forms import RegistrationForm, LoginForm, UpdateAccountForm, ChangePassword, AddServer
 from secrets import token_hex
 from flask_login import login_user, current_user, logout_user, login_required
-from webapp.socket import dec2bin
 
 
 @application.errorhandler(404)
@@ -133,7 +132,7 @@ def forgot_password():
     return render_template('forgot_password.html', user=False, title='Forgot Password')
 
 
-@application.route('/add_server', methods=['GET', 'POSt'])
+@application.route('/add_server', methods=['GET', 'POST'])
 @application.route('/addserver', methods=['GET', 'POST'])
 @login_required
 def add_server():
@@ -186,8 +185,6 @@ def matchpage():
         all_players = Matching.query.filter_by(match_id=current_user.current_match_id).all()
         match = Match.query.filter_by(id=current_user.current_match_id).first()
         all_participants = []
-        banned_maps = []
-        maps_available = dec2bin(match.maps, banned_maps)
         for player in all_players:
             participant = User.query.filter_by(id=player.user_id).first()
             all_participants.append(participant)

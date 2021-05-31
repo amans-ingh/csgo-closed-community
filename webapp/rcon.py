@@ -1,36 +1,36 @@
 import aiorcon
 import asyncio
-# from webapp.models import Servers
+import json
 
 
 class GameServer:
-    def __init__(self):
-        # self.server = Servers.query.filter_by(busy=False).first()[0]
-        # self.hostname = self.server.hostname
-        # self.ip = self.server.ip
-        # self.password = self.server.password
-        self.hostname = 'aman'
-        self.ip = 'bigbang.cargo.win'
-        self.password = 'zeroinf'
+    def __init__(self, ip, port, password, match_id):
+        self.ip = ip
+        self.password = password
+        self.match_id = match_id
+        self.port = port
 
     def load_match(self):
         async def main(loop, command):
-            rcon = await aiorcon.RCON.create(self.ip, 27015, self.password, loop)
+            rcon = await aiorcon.RCON.create(self.ip, self.port, self.password, loop)
             output = await(rcon(command))
-            print(output)
             rcon.close()
             return output
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main(loop, 'get5_loadmatch_url "freddyhome.ddns.net/api/' + self.hostname + '"'))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(main(loop, 'get5_loadmatch_url "freddyhome.ddns.net/api/' + str(self.match_id) + '"'))
 
     def server_status(self):
         async def main(loop, command):
-            rcon = await aiorcon.RCON.create(self.ip, 27015, self.password, loop)
+            rcon = await aiorcon.RCON.create(self.ip, self.port, self.password, loop)
             output = await(rcon(command))
-            print(output)
             rcon.close()
             return output
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main(loop, 'get5_status'))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        output = loop.run_until_complete(main(loop, 'get5_status'))
+        i = output.index('L', 0)
+        json_output = json.loads(output[0:i])
+        return json_output

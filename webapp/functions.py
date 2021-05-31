@@ -24,7 +24,6 @@ class MyClass:
 
     def maps_names(self, i):
         array = self.maps(i)
-        print(array)
         if array[0]:
             self.map_name.append('train')
         if array[1]:

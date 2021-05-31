@@ -1,19 +1,9 @@
 from webapp import sock, db
-from webapp.models import User, Match, Matching
+from webapp.models import User, Match, Matching, Servers
 from flask_socketio import emit
 from webapp.functions import MyClass
-
-
-def dec2bin(i, mapban):
-    if i >= 1:
-        dec2bin(i // 2, mapban)
-        mapban.append(i % 2)
-    m = []
-    for j in range(7 - len(mapban)):
-        m.append(0)
-    for k in mapban:
-        m.append(k)
-    return m
+from webapp.rcon import GameServer
+import random
 
 
 @sock.on('connect')
@@ -66,8 +56,9 @@ def handle_client_connection(data):
     if user:
         if user.searching:
             participants = User.query.filter_by(searching=True).all()
-            if len(participants) >= 2:
-                players = participants[:2]
+            random.shuffle(participants)
+            if len(participants) >= 10:
+                players = participants[:10]
                 match = Match()
                 db.session.add(match)
                 db.session.commit()
@@ -91,8 +82,8 @@ def handle_client_connection(data):
         if user.playing:
             match = Match.query.filter_by(id=user.current_match_id).first()
             if match.status == 1:
-                myclass = MyClass()
-                map_list = myclass.maps_names(match.maps)
+                my_class = MyClass()
+                map_list = my_class.maps_names(match.maps)
                 all_maps = ['mirage', 'inferno', 'overpass', 'nuke', 'train', 'dust2', 'vertigo']
                 for map in map_list:
                     all_maps.remove(map)
@@ -102,9 +93,9 @@ def handle_client_connection(data):
                                         'maps_avail': map_list,
                                         'turn': match.turn}, broadcast=True)
             elif match.status == 2:
-                myclass = MyClass()
-                map_list = myclass.maps_names(match.maps)
-                emit('matchpage', {'mapsbanned': False, 'finalmap': map_list[0], 'ip': 'something'})
+                my_class = MyClass()
+                map_list = my_class.maps_names(match.maps)
+                emit('matchpage', {'mapsbanned': False, 'finalmap': map_list[0], 'ip': match.ip})
 
 
 @sock.on('match')
@@ -120,40 +111,47 @@ def mapveto(data):
     user = User.query.filter_by(id=data['userid']).first()
     match = Match.query.filter_by(id=user.current_match_id).first()
     if match:
-        other_users = User.query.filter_by(current_match_id=user.current_match_id).all()
-        all_players = []
-        for users in other_users:
-            all_players.append(users.id)
-        maps_available = MyClass().maps(match.maps)
-        num_maps_avail = MyClass().maps_left(maps_available)
-        maps_names = MyClass().maps_names(match.maps)
-        map_weight = MyClass().weight_of_map(data['banmap'])
-        if num_maps_avail > 1:
-            if data['banmap'] in maps_names:
-                match.maps = match.maps - map_weight
-                maps_names = MyClass().maps_names(match.maps)
-                num_maps_avail = num_maps_avail - 1
-                emit('mapvetoclient', {'user_id': all_players,
-                                       'banmap': data['banmap'],
-                                       'ip': False,
-                                       'map': False,
-                                       'turn': not match.turn}, broadcast=True)
-                emit('mapvetocaptain', {'capt1': match.team1_capt,
-                                        'capt2': match.team2_capt,
-                                        'maps_avail': maps_names,
-                                        'turn': not match.turn}, broadcast=True)
-                if match.turn:
-                    match.turn = False
-                else:
-                    match.turn = True
-            db.session.commit()
-        if num_maps_avail == 1:
-            match = Match.query.filter_by(id=user.current_match_id).first()
-            match.status = 2
-            map_chosen = MyClass().maps_names(match.maps)
-            db.session.commit()
-            emit('mapvetoclient', {'user_id': all_players,
-                                   'map': map_chosen[0],
-                                   'ip': False,
-                                   'banmap': False,
-                                   'turn': False}, broadcast=True)
+        if match.team1_capt == data['userid'] or match.team2_capt == data['userid']:
+            other_users = User.query.filter_by(current_match_id=user.current_match_id).all()
+            all_players = []
+            for users in other_users:
+                all_players.append(users.id)
+            maps_available = MyClass().maps(match.maps)
+            num_maps_avail = MyClass().maps_left(maps_available)
+            maps_names = MyClass().maps_names(match.maps)
+            map_weight = MyClass().weight_of_map(data['banmap'])
+            if num_maps_avail > 1:
+                if data['banmap'] in maps_names:
+                    match.maps = match.maps - map_weight
+                    maps_names = MyClass().maps_names(match.maps)
+                    num_maps_avail = num_maps_avail - 1
+                    emit('mapvetoclient', {'user_id': all_players,
+                                           'banmap': data['banmap'],
+                                           'ip': False,
+                                           'map': False,
+                                           'turn': not match.turn}, broadcast=True)
+                    emit('mapvetocaptain', {'capt1': match.team1_capt,
+                                            'capt2': match.team2_capt,
+                                            'maps_avail': maps_names,
+                                            'turn': not match.turn}, broadcast=True)
+                    if match.turn:
+                        match.turn = False
+                    else:
+                        match.turn = True
+                db.session.commit()
+            if num_maps_avail == 1:
+                match = Match.query.filter_by(id=user.current_match_id).first()
+                server = Servers.query.filter_by(busy=False).first()
+                if server:
+                    server_config = GameServer(server.ip, server.port, server.password, match.id)
+                    server_config.load_match()
+                    match_ip = 'steam://connect/' + server.ip + ':' + str(server.port)
+                    match.ip = match_ip
+                    match.status = 2
+                    map_chosen = MyClass().maps_names(match.maps)
+                    db.session.commit()
+                    emit('mapvetoclient', {'user_id': all_players,
+                                           'map': map_chosen[0],
+                                           'ip': 'steam://connect/' + server.ip + ':' + str(server.port),
+                                           'banmap': False,
+                                           'turn': False}, broadcast=True)

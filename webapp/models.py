@@ -38,6 +38,7 @@ class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.Integer, nullable=False, default=0)
     maps = db.Column(db.Integer, nullable=False, default=127)
+    ip = db.Column(db.String)
     team1_capt = db.Column(db.Integer)
     team2_capt = db.Column(db.Integer)
     turn = db.Column(db.Boolean, default=True)

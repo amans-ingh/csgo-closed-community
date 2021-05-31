@@ -9,7 +9,7 @@
                 </div>
             </div>
 
-            {% for i in range(2) %}
+            {% for i in range(10) %}
             {% if i%2 == 0 %}
             <div class="card text-white bg-dark">
                 <div class="card-header">
@@ -30,7 +30,7 @@
                         <button class="btn btn-primary" id="decidedmap" disabled></button>
                     </div>
                     <div class="card mb-4">
-                        <button class="btn btn-primary" id="connect2server">Connect</button>
+                        <a class="btn btn-primary" id="connect2server">Connect</a>
                     </div>
                 </div>
             </div>
@@ -98,7 +98,7 @@
                 </div>
             </div>
 
-            {% for i in range(2) %}
+            {% for i in range(10) %}
             {% if i%2 == 1 %}
             <div class="card text-white bg-dark">
                 <div class="card-header">
@@ -150,6 +150,7 @@
             hidediv('mapvetodiv');
             showdiv('mapchosen');
             document.getElementById('decidedmap').innerHTML = data['finalmap'];
+            document.getElementById('connect2server').href = data['ip'];
         }
     });
 
@@ -161,6 +162,8 @@
                 hidediv('mapvetodiv');
                 showdiv('mapchosen');
                 document.getElementById('decidedmap').innerHTML = data['map'];
+                document.getElementById('connect2server').href = data['ip'];
+                console.log(data['ip']);
             }
             else {
                 removeMap(data['banmap']);
