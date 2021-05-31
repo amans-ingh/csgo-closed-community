@@ -10,10 +10,10 @@ class GenerateConfig:
     def find_maps(self):
         match = Match.query.filter_by(id=self.match_id).first()
         map_finder = MyClass()
-        maps_to_play = {}
+        maps_to_play = []
         maps_to_be_played = map_finder.maps_names(match.maps)
         for maps in maps_to_be_played:
-            maps_to_play[maps] = ''
+            maps_to_play.append('de_' + maps)
         return maps_to_play
 
     def find_teams(self):
@@ -49,12 +49,12 @@ class MyApi(Resource):
         config_generator = GenerateConfig(match_id)
         (team_a, team_b) = config_generator.find_teams()
         config = {'matchid': match_id,
-                  'num_maps': '1',
-                  'skip_veto': '1',
+                  'num_maps': len(config_generator.find_maps()),
+                  'skip_veto': True,
                   'side_type': 'always_knife',
                   'maplist': config_generator.find_maps(),
-                  'players_per_team': '5',
-                  'min_players_to_ready': '1',
+                  'players_per_team': 5,
+                  'min_players_to_ready': 1,
                   'min_spectators_to_ready': '0',
                   'team1': team_a,
                   'team2': team_b

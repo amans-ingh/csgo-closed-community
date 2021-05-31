@@ -13,7 +13,7 @@ application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db = SQLAlchemy(application)
 bcrypt = Bcrypt(application)
 api = Api(application)
-sock = SocketIO(application)
+sock = SocketIO(application, cors_allowed_origins='*')
 login_manager = LoginManager(application)
 
 
