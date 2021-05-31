@@ -2,7 +2,7 @@
 
 This is an **experimental** matchmaking system meant to be used in conjunction with the [get5](https://github.com/splewis/get5) CS:GO server plugin. It is built for small communities in CSGO to have matches against other players in community.
 
-##**WARNING**: YOU SHOULD NOT USE THIS AT THIS STAGE. IT HAS BUGS. THE PROJECT IS STILL NOT FINISHED.
+## **WARNING**: YOU SHOULD NOT USE THIS AT THIS STAGE. IT HAS BUGS. THE PROJECT IS STILL NOT FINISHED.
 
 
 ## Idea behind:
