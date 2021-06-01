@@ -31,18 +31,25 @@ class User(db.Model, UserMixin):
     profile_pic = db.Column(db.String, nullable=False)
     playing = db.Column(db.Boolean, nullable=False, default=False)
     matches = db.relationship('Matching', backref='player', lazy=True)
-    server = db.relationship('Servers', backref='owner', lazy=True)
+
 
 
 class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    api = db.Column(db.String)
     status = db.Column(db.Integer, nullable=False, default=0)
     maps = db.Column(db.Integer, nullable=False, default=127)
     ip = db.Column(db.String)
-    team1_capt = db.Column(db.Integer)
-    team2_capt = db.Column(db.Integer)
+    team1_id = db.Column(db.Integer, db.ForeignKey('team.id'))
+    team2_id = db.Column(db.Integer, db.ForeignKey('team.id'))
     turn = db.Column(db.Boolean, default=True)
+    winner = db.Column(db.Integer, db.ForeignKey('team.id'))
     matches = db.relationship('Matching', backref='match', lazy=True)
+    abandoned = db.Column(db.Boolean, default=False)
+    forfeit = db.Column(db.Boolean, default=False)
+    server_id = db.Column(db.Integer, db.ForeignKey('servers.id'))
+    team1_score = db.Column(db.Integer)
+    team2_score = db.Column(db.Integer)
 
 
 class Matching(db.Model):
@@ -62,3 +69,63 @@ class Servers(db.Model):
     ip = db.Column(db.String, nullable=False)
     ongoing_match = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
+class Team(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    current_match_id = db.Column(db.Integer, default=0)
+    name = db.Column(db.String(15), nullable=False)
+    flag = db.Column(db.String(2), nullable=False, default='FR')
+    logo = db.Column(db.String(4), nullable=False, default='nip')
+    captain = db.Column(db.Integer, nullable=False)
+    permanent_team = db.Column(db.Boolean, nullable=False, default=False)
+    p1 = db.Column(db.Integer, db.ForeignKey('user.id'))
+    p2 = db.Column(db.Integer, db.ForeignKey('user.id'))
+    p3 = db.Column(db.Integer, db.ForeignKey('user.id'))
+    p4 = db.Column(db.Integer, db.ForeignKey('user.id'))
+    p5 = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+
+class MapStats(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    match_id = db.Column(db.Integer, db.ForeignKey('match.id'))
+    map_number = db.Column(db.Integer)
+    map_name = db.Column(db.String(64))
+    winner = db.Column(db.Integer, db.ForeignKey('team.id'))
+    team1_score = db.Column(db.Integer, default=0)
+    team2_score = db.Column(db.Integer, default=0)
+    player_stats = db.relationship('PlayerStats', backref='mapstats', lazy='dynamic')
+
+
+class PlayerStats(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    match_id = db.Column(db.Integer, db.ForeignKey('match.id'))
+    map_id = db.Column(db.Integer, db.ForeignKey('map_stats.id'))
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'))
+    steam_id = db.Column(db.String(40))
+    name = db.Column(db.String(40))
+    kills = db.Column(db.Integer, default=0)
+    deaths = db.Column(db.Integer, default=0)
+    roundsplayed = db.Column(db.Integer, default=0)
+    assists = db.Column(db.Integer, default=0)
+    flashbang_assists = db.Column(db.Integer, default=0)
+    teamkills = db.Column(db.Integer, default=0)
+    suicides = db.Column(db.Integer, default=0)
+    headshot_kills = db.Column(db.Integer, default=0)
+    damage = db.Column(db.Integer, default=0)
+    bomb_plants = db.Column(db.Integer, default=0)
+    bomb_defuses = db.Column(db.Integer, default=0)
+    v1 = db.Column(db.Integer, default=0)
+    v2 = db.Column(db.Integer, default=0)
+    v3 = db.Column(db.Integer, default=0)
+    v4 = db.Column(db.Integer, default=0)
+    v5 = db.Column(db.Integer, default=0)
+    k1 = db.Column(db.Integer, default=0)
+    k2 = db.Column(db.Integer, default=0)
+    k3 = db.Column(db.Integer, default=0)
+    k4 = db.Column(db.Integer, default=0)
+    k5 = db.Column(db.Integer, default=0)
+    firstkill_t = db.Column(db.Integer, default=0)
+    firstkill_ct = db.Column(db.Integer, default=0)
+    firstdeath_t = db.Column(db.Integer, default=0)
+    firstdeath_Ct = db.Column(db.Integer, default=0)

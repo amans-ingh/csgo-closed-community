@@ -5,6 +5,7 @@ class MyClass:
         self.num_maps = 0
         self.map_name = []
         self.weight = 0
+
     def maps(self, i):
         if i >= 1:
             self.maps(i // 2)

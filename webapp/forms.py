@@ -26,6 +26,9 @@ class RegistrationForm(FlaskForm):
         (steam_id, profile_pic, profile_url) = steam_api.steam_id_profile(steam_url.data)
         if steam_id:
             pass
+            # hours = steam_api.game_hours(steam_id)
+            # if hours < 3393359:
+            #     raise ValidationError('Insufficient experience in-game')
         else:
             raise ValidationError('Incorrect steam profile URL')
 
@@ -33,7 +36,7 @@ class RegistrationForm(FlaskForm):
         if invite_code.data != 'admin':
             invited_by = User.query.filter_by(invite_code=invite_code.data).first()
             if invited_by:
-                if int(invited_by.invites_left) <= 0:
+                if invited_by.invites_left <= 0:
                     raise ValidationError('Invite code expired!')
             else:
                 raise ValidationError('Invalid invite code')
@@ -66,6 +69,9 @@ class UpdateAccountForm(FlaskForm):
         (steam_id, profile_pic, profile_url) = steam_api.steam_id_profile(steam_url.data)
         if steam_id:
             pass
+            # hours = steam_api.game_hours(steam_id)
+            # if hours < 3393359:
+            #     raise ValidationError('Insufficient experience in-game')
         else:
             raise ValidationError('Incorrect steam profile URL')
 
@@ -80,7 +86,8 @@ class ChangePassword(FlaskForm):
 
 class AddServer(FlaskForm):
     hostname = StringField('Hostname', validators=[Length(min=2, max=20)])
-    location = SelectField('Server Location', default='BOM', choices=[('BOM', 'Mumbai'), ('PUNE', 'Pune'), ('MAS', 'Madras')])
+    location = SelectField('Server Location', default='BOM',
+                           choices=[('BOM', 'Mumbai'), ('PUNE', 'Pune'), ('MAS', 'Madras')])
     ip = StringField('IP Address', validators=[DataRequired()])
     port = IntegerField('Port Number', validators=[DataRequired()])
     password = StringField('RCON Password', validators=[DataRequired()])

@@ -1,6 +1,7 @@
 import aiorcon
 import asyncio
 import json
+from webapp import application
 
 
 class GameServer:
@@ -19,7 +20,8 @@ class GameServer:
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(main(loop, 'get5_loadmatch_url "freddyhome.ddns.net/api/' + str(self.match_id) + '"'))
+        return loop.run_until_complete(main(loop, 'get5_loadmatch_url "' + application.config['SERVER_URL'] +
+                                            '/api/match/' + str(self.match_id) + '/config"'))
 
     def server_status(self):
         async def main(loop, command):

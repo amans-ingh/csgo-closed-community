@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <div class="overview text-white">
+        <h1 class="mb-4">
+            Table entries in PlayerStats
+        </h1>
+        {% for player in players %}
+        <div class="card bg-dark text-white mb-2">
+            <div class="card-header">
+                {{ player.name }}'s data received
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

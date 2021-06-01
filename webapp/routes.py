@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request
 from webapp import application, bcrypt, db
-from webapp.models import User, Servers, Match, Matching
+from webapp.models import User, Servers, Match, Matching, Team, PlayerStats
 from webapp.steamapi import SteamAPI
 from webapp.forms import RegistrationForm, LoginForm, UpdateAccountForm, ChangePassword, AddServer
 from secrets import token_hex
@@ -10,7 +10,8 @@ from flask_login import login_user, current_user, logout_user, login_required
 @application.errorhandler(404)
 def page_not_found(e):
     if current_user.is_authenticated:
-        return render_template('error.html', error=e, email=current_user.email, title='Page Not Found', user=current_user)
+        return render_template('error.html', error=e, email=current_user.email, title='Page Not Found',
+                               user=current_user)
     return render_template('error.html', error=e, title='Page Not found', user=False)
 
 
@@ -68,7 +69,8 @@ def register():
 def servers():
     if current_user.admin:
         game_servers = Servers.query.filter_by(user_id=current_user.id).all()
-        return render_template('servers.html', email=current_user.email, servers=game_servers, title='Servers', user=current_user)
+        return render_template('servers.html', email=current_user.email, servers=game_servers, title='Servers',
+                               user=current_user)
     return redirect(url_for('unauth.html'))
 
 
@@ -115,7 +117,8 @@ def changepassword():
             return redirect('changepassword')
     elif request.method == 'GET':
         form.username = current_user.nickname
-    return render_template('change_password.html', form=form, email=current_user.email, user=current_user, title='Change Password')
+    return render_template('change_password.html', form=form, email=current_user.email, user=current_user,
+                           title='Change Password')
 
 
 @application.route('/logout')
@@ -145,23 +148,25 @@ def add_server():
             db.session.commit()
             flash('Server added!', 'success')
             return redirect(url_for('servers'))
-        return render_template('add_server.html', email=current_user.email, form=form, title='Add Server', user=current_user)
+        return render_template('add_server.html', email=current_user.email, form=form, title='Add Server',
+                               user=current_user)
     return render_template('unauth.html', email=current_user.email, title='Unauthorised', user=current_user)
 
 
-@application.route('/confirmdelete/<id>')
+@application.route('/confirmdelete/<server_id>')
 @login_required
-def confirm_delete(id):
-    server = Servers.query.filter_by(id=id).first()
+def confirm_delete(server_id):
+    server = Servers.query.filter_by(id=server_id).first()
     if server.user_id == current_user.id:
-        return render_template('confirm_delete.html', email=current_user.email, user=current_user, title='Confirm Server Deletion', id=id)
+        return render_template('confirm_delete.html', email=current_user.email, user=current_user,
+                               title='Confirm Server Deletion', id=server_id)
     return redirect(url_for('server'))
 
 
-@application.route('/delete/<id>')
+@application.route('/delete/<server_id>')
 @login_required
-def delete(id):
-    Servers.query.filter_by(id=id).delete()
+def delete(server_id):
+    Servers.query.filter_by(id=server_id).delete()
     db.session.commit()
     return redirect(url_for('servers'))
 
@@ -188,7 +193,9 @@ def matchpage():
         for player in all_players:
             participant = User.query.filter_by(id=player.user_id).first()
             all_participants.append(participant)
-        if current_user.id == match.team1_capt or current_user.id == match.team2_capt:
+        team_a = Team.query.filter_by(id=match.team1_id).first()
+        team_b = Team.query.filter_by(id=match.team2_id).first()
+        if current_user.id == team_a.captain or current_user.id == team_b.captain:
             return render_template('matchpage.html', email=current_user.email, title='Match Room', user=current_user,
                                    match=match, all_participants=all_participants, matchpage=True)
         return render_template('matchpage.html', email=current_user.email, title='Match Room', user=current_user,
@@ -203,4 +210,14 @@ def users():
         all_users = User.query.all()
         return render_template('users.html', email=current_user.email, user=current_user, all_users=all_users,
                                title='All Users')
+    return redirect(url_for('index'))
+
+
+@application.route('/players')
+@login_required
+def players():
+    if current_user.admin:
+        all_players = PlayerStats.query.all()
+        return render_template('matchdebug.html', email=current_user.email, user=current_user, players=all_players,
+                               title='Match Debug')
     return redirect(url_for('index'))

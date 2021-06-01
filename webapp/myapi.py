@@ -1,11 +1,12 @@
 from flask_restful import Resource
 from webapp.models import Match, User, Matching
 from webapp.functions import MyClass
+from webapp import application
 
 
 class GenerateConfig:
-    def __init__(self, match_id):
-        self.match_id = match_id
+    def __init__(self, map_num):
+        self.match_id = map_num
 
     def find_maps(self):
         match = Match.query.filter_by(id=self.match_id).first()
@@ -44,22 +45,28 @@ class GenerateConfig:
         return team_a, team_b
 
 
-class MyApi(Resource):
-    def get(self, match_id):
-        config_generator = GenerateConfig(match_id)
-        (team_a, team_b) = config_generator.find_teams()
-        config = {'matchid': match_id,
-                  'num_maps': len(config_generator.find_maps()),
-                  'skip_veto': True,
-                  'side_type': 'always_knife',
-                  'maplist': config_generator.find_maps(),
-                  'players_per_team': 5,
-                  'min_players_to_ready': 1,
-                  'min_spectators_to_ready': '0',
-                  'team1': team_a,
-                  'team2': team_b
-        }
-        return config
-
-    def put(self, token):
-        return {'message': 'invalid-token'}
+class MyApiMatchStart(Resource):
+    def get(self, match_id, event):
+        if event == 'config':
+            match = Match.query.get(match_id)
+            if match:
+                config_generator = GenerateConfig(match_id)
+                (team_a, team_b) = config_generator.find_teams()
+                config = {'matchid': match_id,
+                          'num_maps': len(config_generator.find_maps()),
+                          'skip_veto': True,
+                          'side_type': 'always_knife',
+                          'maplist': config_generator.find_maps(),
+                          'players_per_team': 5,
+                          'min_players_to_ready': 1,
+                          'min_spectators_to_ready': 0,
+                          'team1': team_a,
+                          'team2': team_b,
+                          'cvars': {'get5_web_api_key': application.config['SERVER_URL'],
+                                    'get5_web_api_url': application.config['SERVER_URL'],
+                                    'hostname': 'Match is live'
+                                    }
+                          }
+                return config
+            return {'message': 'Invalid request'}
+        return {'message': 'Invalid request'}
